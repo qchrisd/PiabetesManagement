@@ -9,6 +9,7 @@
 
 # Import the necessary packages
 import RPi.GPIO as gpio
+import emailStatus
 from time import sleep
 
 
@@ -42,10 +43,10 @@ def adjustSyringeStatus(pin, day):
 		6: "Saturday"}
 	dayString = days.get(day)
 	if gpio.input(pin):
-		print("Changing status of pin " + dayString + " (pin " + str(pin) + ") to True")
+		emailStatus.sendEmail(emailStatus.formatEmail("Syringe Added","{}'s syringe was just added to the holder.".format(day)))
 		pinStatus[day] = 1
 	else:
-		print("Changing status of pin" + dayString + " (pin " + str(pin) + ") to False")
+		emailStatus.sendEmail(emailStatus.formatEmail("Syringe Removed","{}'s syringe was just removed from the holder.".format(day)))
 		pinStatus[day] = 0
 # Day of the week methods. The GPIO pin numbers are appended to the end of each method
 # Sunday

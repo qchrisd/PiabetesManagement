@@ -1,6 +1,8 @@
 #
 # This program sends an email to the specified individual from the piabetes monitor email.
-# The email contains the status information of the current
+#
+# The username and password for the sender's email address should be added to a file named 'config.py'
+#
 
 # Method to email the status of the monitor
 def sendEmail(message):
