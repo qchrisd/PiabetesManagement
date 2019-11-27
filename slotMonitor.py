@@ -1,3 +1,4 @@
+#
 # This program watches the state of the syringe slots.
 # The inserted syringes press the switch, changing the state to high.
 # A low signal indicates a removed syringe.
@@ -43,10 +44,10 @@ def adjustSyringeStatus(pin, day):
 		6: "Saturday"}
 	dayString = days.get(day)
 	if gpio.input(pin):
-		emailStatus.sendEmail(emailStatus.formatEmail("Syringe Added","{}'s syringe was just added to the holder.".format(day)))
+		emailStatus.sendEmail(emailStatus.formatEmail("Syringe Change Detected","{}'s syringe was just added to the holder.".format(dayString)))
 		pinStatus[day] = 1
 	else:
-		emailStatus.sendEmail(emailStatus.formatEmail("Syringe Removed","{}'s syringe was just removed from the holder.".format(day)))
+		emailStatus.sendEmail(emailStatus.formatEmail("Syringe Change Detected","{}'s syringe was just removed from the holder.".format(dayString)))
 		pinStatus[day] = 0
 # Day of the week methods. The GPIO pin numbers are appended to the end of each method
 # Sunday
@@ -87,7 +88,7 @@ for pin in inputPins:
 while(True):
 	try:
 		print(pinStatus)
-		sleep(1)
+		sleep(20)
 	except KeyboardInterrupt:
 		break
 
