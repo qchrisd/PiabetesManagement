@@ -13,6 +13,7 @@
 # Import the necessary modules
 import RPi.GPIO as gpio
 import emailStatus as email
+import config
 from time import sleep
 
 # Callback functions for when edge is detected
@@ -27,13 +28,15 @@ def edgeDetected(channel):
 	else:  # Falling edge (from 1 to 0)
 		print("Falling edge detected: pin "+ str(channel) + " <" + str(gpio.input(channel)) + ">")
 
-# Set up the GPIO pins
+## Set up the GPIO pins
 gpio.setmode(gpio.BCM)  # Using Broadcom numbering
-gpio.setup(12, gpio.IN, pull_up_down = gpio.PUD_DOWN)  # Set up pin 12 as input with pull down resistor
-gpio.setup(25, gpio.IN, pull_up_down = gpio.PUD_UP)  # Set up pin 25 as input with pull down resistor
+# USB pin detects wall power. Needs to be pulled down when not plugged in.
+gpio.setup(config.boostUSB, gpio.IN, pull_up_down = gpio.PUD_DOWN)
+# LBO detects low battery. Needs to be pulled up or pi will artificially trigger LBO.
+gpio.setup(config.boostLBO, gpio.IN, pull_up_down = gpio.PUD_UP)
 # Add the edge detection on this channel. Bouncetime is set to 3s
-gpio.add_event_detect(12, gpio.BOTH, callback = edgeDetected, bouncetime = 3000)
-gpio.add_event_detect(25, gpio.FALLING, callback = edgeDetected, bouncetime = 3000)
+gpio.add_event_detect(config.boostUSB, gpio.BOTH, callback = edgeDetected, bouncetime = 3000) # 3s bounce time
+gpio.add_event_detect(config.boostLBO, gpio.FALLING, callback = edgeDetected, bouncetime = 30000) # 30s bounce time
 
 # Main loop
 try:
