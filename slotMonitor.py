@@ -12,7 +12,8 @@
 import RPi.GPIO as gpio
 import emailStatus
 from config import *
-from time import sleep
+import time
+import log
 
 ## Create some variables
 # Creates a list of input pins in a list
@@ -43,15 +44,16 @@ def onEdgeDetection(pin):
 # Method to adjust the status of the syringe given a day of the week (0-6)
 def adjustSyringeStatus(pin):
 	dayString = inputDays.get(pin)
+	time.sleep(.2)
 	# If the pin is high, the light reaches the phototransistor and the syringe is not in the holder
 	if gpio.input(pin):
 #		emailStatus.sendEmail(emailStatus.formatEmail("Syringe Change Detected","{}'s syringe was just added to the holder.".format(dayString)))
-		print("Syringe Change Detected","{}'s syringe was just removed from the holder.".format(dayString))
+		log.logMessage("{}'s syringe was just removed from the holder.".format(dayString))
 		pinStatus[inputs.index(pin)] = 0
 	# If the pin is low, the light is blocked and the syringe is in the holder
 	else:
 #		emailStatus.sendEmail(emailStatus.formatEmail("Syringe Change Detected","{}'s syringe was just removed from the holder.".format(dayString)))
-		print("Syringe Change Detected","{}'s syringe was just added to the holder.".format(dayString))
+		log.logMessage("{}'s syringe was just added to the holder.".format(dayString))
 		pinStatus[inputs.index(pin)] = 1
 # Day of the week methods. The GPIO pin numbers are appended to the end of each method
 # Sunday
@@ -84,7 +86,8 @@ pinStatus = [0,0,0,0,0,0,0]
 
 # Adds the events to the listener
 for pin in inputs:
-	pinStatus[inputs.index(pin)] = gpio.input(pin)
+	time.sleep(.1)
+	pinStatus[inputs.index(pin)] = int(not gpio.input(pin))
 	gpio.add_event_detect(pin, gpio.BOTH, onEdgeDetection, bouncetime=3000)  # 3s bounce time
 
 
@@ -92,7 +95,7 @@ for pin in inputs:
 while(True):
 	try:
 		print(pinStatus)
-		sleep(2)
+		time.sleep(2)
 	except KeyboardInterrupt:
 		break
 
