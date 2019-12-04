@@ -47,12 +47,12 @@ def adjustSyringeStatus(pin):
 	time.sleep(.2)
 	# If the pin is high, the light reaches the phototransistor and the syringe is not in the holder
 	if gpio.input(pin):
-#		emailStatus.sendEmail(emailStatus.formatEmail("Syringe Change Detected","{}'s syringe was just added to the holder.".format(dayString)))
+		emailStatus.sendEmail(emailStatus.formatEmail("Syringe Change Detected","{}'s syringe was just added to the holder.".format(dayString)))
 		log.logMessage("{}'s syringe was just removed from the holder.".format(dayString))
 		pinStatus[inputs.index(pin)] = 0
 	# If the pin is low, the light is blocked and the syringe is in the holder
 	else:
-#		emailStatus.sendEmail(emailStatus.formatEmail("Syringe Change Detected","{}'s syringe was just removed from the holder.".format(dayString)))
+		emailStatus.sendEmail(emailStatus.formatEmail("Syringe Change Detected","{}'s syringe was just removed from the holder.".format(dayString)))
 		log.logMessage("{}'s syringe was just added to the holder.".format(dayString))
 		pinStatus[inputs.index(pin)] = 1
 # Day of the week methods. The GPIO pin numbers are appended to the end of each method
