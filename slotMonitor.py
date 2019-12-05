@@ -10,10 +10,13 @@
 
 # Import the necessary packages
 import RPi.GPIO as gpio
-import emailStatus
-from config import *
 import time
+# Import local modules
 import log
+import emailStatus
+import shutdown
+from config import *
+
 
 ## Create some variables
 # Creates a list of input pins in a list
@@ -28,12 +31,14 @@ inputDays = dict(zip(inputs, days))
 gpio.setmode(gpio.BCM)
 # Sets up the input pins with pull down resistors
 gpio.setup(inputs, gpio.IN, pull_up_down=gpio.PUD_DOWN)
-
+# Sets up the power management inputs
+gpio.setup(boostUSB, gpio.IN, pull_up_down=gpio.PUD_DOWN)  # Wall power input
+gpio.setup(boostLBO, gpio.IN, pull_up_down=gpio.PUD_UP)  # low battery
 
 ## Callback functions to run on edge detection
 # Callbacks will be run on both rising and falling edges, polling determines the direction
 # This method dynamically runs the respective method for when a button is pressed or released
-def onEdgeDetection(pin):
+def photoEdgeDetected(pin):
 	# Initializes self for attribute calling
 	self = __import__(__name__)
 
@@ -79,6 +84,28 @@ def changeSaturday(pin):
 	adjustSyringeStatus(pin)
 
 
+## Power managment edge function
+def powerEdgeDetected(pin):
+
+	# Pause for 1 second to let the pin finish falling before polling
+	time.sleep(1)
+
+	# Shutdown the Raspberry Pi if the battery is low
+	if pin == boostLBO and not gpio.input(pin):
+		log.logMessage("Low battery detected. Shutting the raspberry pi down.")
+		shutdown.shutdown()
+
+	# Log messages if the wall power is unplugged and plugged back in
+	elif pin == boostUSB:
+		# Rising edge (just plugged in)
+		if gpio.input(pin):
+			log.logMessage("Device plugged in.")
+			emailStatus.sendEmail(emailStatus.formatEmail("Device Plugged In","The syringe monitor has just been plugged into wall power."))
+		# Falling edge (just unplugged
+		else:
+			log.logMessage("Device unplugged.")
+			emailStatus.sendEmail(emailStatus.formatEmail("Device Unplugged","The syringe monitor has just been unplugged from wall power. There is roughly 1 hour of battery life before the device shuts down." ))
+
 
 # Creates a list with the status of each of the pins
 # The list starts at 0 for Sunday and ends at 6 for Saturday
@@ -88,8 +115,10 @@ pinStatus = [0,0,0,0,0,0,0]
 for pin in inputs:
 	time.sleep(.1)
 	pinStatus[inputs.index(pin)] = int(not gpio.input(pin))
-	gpio.add_event_detect(pin, gpio.BOTH, onEdgeDetection, bouncetime=3000)  # 3s bounce time
-
+	gpio.add_event_detect(pin, gpio.BOTH, photoEdgeDetected, bouncetime=3000)  # 3s bounce time
+# Adds power management edge detection
+gpio.add_event_detect(boostUSB, gpio.BOTH, powerEdgeDetected, bouncetime = 3000)  # 3s bounce time
+gpio.add_event_detect(boostLBO, gpio.FALLING, powerEdgeDetected, bouncetime = 65000) # 65s bounce time
 
 # Main loop of the program to keep it alive
 while(True):
